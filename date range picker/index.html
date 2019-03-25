@@ -1,0 +1,631 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+  <link rel="stylesheet" href="main.css">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,600,700" rel="stylesheet">
+  <meta charset="utf-8">
+</head>
+
+<body>
+
+  <div class="cal-wrapper">
+    <span class="arrows" onclick="prevMonth()">&lt</span><p id="calendar-header"></p><span class="arrows" onclick="nextMonth()">&gt</span>
+    <div id="calendar"></div>
+    <div class="event-wrap">
+      <div><label for="event"><p>type name of event:</p></label></div>
+      <input type="text" id="event">
+      <button onclick="deleteAllEvents()" class="cancell">Delete  Events</button>
+      <button onclick="cancellEvents()" class="cancell">CANCEL</button>
+      <button onclick="eventSaver()">SAVE</button>
+    </div>
+  </div>
+
+<div class = "wrapper">
+  <div class="cal-header">
+    <p id="header-text"></h3>
+  </div>
+  <div class="form-wrapper">
+    <input class="select" value="Today">
+     <ul class="select_list">
+          <li class="select_item" data-value="Custom">Custom<span class="check">&#10003</span></li>
+          <li class="select_item" data-value="Today">Today<span class="check">&#10003</span></li>
+          <li class="select_item" data-value="Yesterday">Yesterday<span class="check">&#10003</span></li>
+          <li class="select_item" data-value="Last 7 days">Last 7 days<span class="check">&#10003</span></li>
+          <li class="select_item" data-value="Last 30 days">Last 30 days<span class="check">&#10003</span></li>
+          <li class="select_item" data-value="Last 90 days">Last 90 days<span class="check">&#10003</span></li>
+     </ul>
+    <div class="inp-wrapper">
+      <div><label for="from"><p>From:</p></label>
+        <input type= "text" id="from"></div>
+      <div><label for="to"><p>To:</p></label>
+        <input type= "text" id="to"></div>
+    </div>
+    <button onclick="cancellAll()" class="cancell">CANCEL</button>
+    <button onclick="showEvents()" class="save">APLLY</button>
+  </div>
+  <div id="events">
+    <h3 id="eventHeader"></h3>
+    <div class="events"></div>  
+  </div>
+</div>
+
+<script>
+const monthes = {
+    0:"Jan",
+    1:"Feb",
+    2:"March",
+    3:"Apr",
+    4:"May",
+    5:"June",
+    6:"July",
+    7:"Aug",
+    8:"Sept",
+    9:"Oct",
+    10:"Nov",
+    11:"Dec"
+  } 
+
+  let chosenOne = {
+    "day":"",
+    "month":"",
+    "year":"",
+    "class":""
+  }
+
+  let chosenTwo = {
+    "day":"",
+    "month":"",
+    "year":"",
+    "class":""
+  }
+
+  let curMonth = new Date().getMonth();
+  let curYear = new Date().getFullYear() + "";
+  let pageCurMonth = monthes[curMonth]
+  let from = document.getElementById("from")
+  let to = document.getElementById("to")
+  let select = document.querySelector(".select");
+  let date = new Date();
+  let events = JSON.parse(localStorage.getItem("myEvents")) || {};
+
+
+  document.getElementById("calendar-header").innerHTML = pageCurMonth + " " + curYear.substring(2);
+  document.getElementById("header-text").innerHTML = pageCurMonth + " " + new Date().getDate() + "," +  curYear.substring(2)
+
+
+  function createCalendar(id, year, month) {
+
+    let elem = document.getElementById(id);
+    let d = new Date(year, month);
+    let temp =  getDay(d);
+    let table = '<table><tr><th>mon</th><th>tue</th><th>wed</th><th>thu</th><th>fri</th><th>sat</th><th>sun</th></tr><tr>';
+
+    for (let i = 0; i < getDay(d); i++) {
+        table += '<td class = "prevMonth">'+ (+getLastDayOfMonth(date.getFullYear(), curMonth-1) - temp+1)+'</td>';
+        temp--
+    }
+    while (d.getMonth() == month) {
+        table += '<td class = "currMonth">' + d.getDate() + '</td>';
+        if (getDay(d) % 7 == 6) { 
+           table += '</tr><tr>';
+        }
+        d.setDate(d.getDate() + 1);
+    }
+    if (getDay(d) != 0) {
+        for (var i = getDay(d); i < 7; i++) {
+          table += '<td class = "nextMonth">'+ (+temp+1) + '</td>';
+          temp++
+        }
+    }
+    table += '</tr></table>';
+    elem.innerHTML = table;
+
+
+    let days = document.querySelectorAll("td");
+    let calendar = document.querySelector(".cal-wrapper");
+    let сalendarHeader =  document.getElementById("calendar-header");
+
+    for (let i =0; i<days.length;i++) {
+        days[i].onclick = datePicker;
+        days[i].ondblclick = eventEditor;
+
+        if(findKey(monthes,pageCurMonth) == new Date().getMonth() && curYear == new Date().getFullYear()) {
+            for(let i =0; i<document.querySelectorAll(".currMonth").length;i++) {
+                if(document.querySelectorAll(".currMonth")[i].innerHTML == new Date().getDate()) {
+                   document.querySelectorAll(".currMonth")[i].classList.add("today");  
+                }
+            }
+        }
+    }    
+    if(!calendar.classList.contains("calendar2") && chosenTwo.day != ""){
+       for(let i =0; i<document.querySelectorAll("td").length;i++){
+           document.querySelectorAll("td")[i].classList.remove("cal2-active")
+        }
+    }
+    
+    for (let event in events) {
+        if (monthes[event.split(" ")[0]] == pageCurMonth && event.slice(-4)==curYear){
+            for (let i=0; i<document.querySelectorAll(".currMonth").length;i++) {
+                if(document.querySelectorAll(".currMonth")[i].innerHTML == event.split(" ")[1].replace(/\,/g, '')) {
+                 document.querySelectorAll(".currMonth")[i].classList.add("edited");  
+                }
+            }
+        } else if (monthes[Number(event.split(" ")[0])+1] == pageCurMonth  && event.slice(-4)==curYear || Number(event.split(" ")[0])+1 ==12 && +event.slice(-4)+1 == curYear && pageCurMonth=="Jan" ) {
+            for (let i=0; i<document.querySelectorAll(".prevMonth").length;i++) {
+                if(document.querySelectorAll(".prevMonth")[i].innerHTML == event.split(" ")[1].replace(/\,/g, '')) {
+                   document.querySelectorAll(".prevMonth")[i].classList.add("edited");  
+                }    
+            }  
+        } else if (monthes[Number(event.split(" ")[0])-1] == pageCurMonth){
+            for (let i=0; i<document.querySelectorAll(".nextMonth").length;i++) {
+                if(document.querySelectorAll(".nextMonth")[i].innerHTML == event.split(" ")[1].replace(/\,/g, '')) {
+                   document.querySelectorAll(".nextMonth")[i].classList.add("edited");  
+                }    
+            }
+        }  
+    }
+    
+
+ 
+
+  if(chosenOne.class == "" && chosenOne.month == findKey(monthes,pageCurMonth) && chosenOne.year == curYear) {
+      for (let i=0; i<document.querySelectorAll(".currMonth").length;i++) {
+            if(document.querySelectorAll(".currMonth")[i].innerHTML == chosenOne.day) {
+              document.querySelectorAll(".currMonth")[i].classList.add("cal-active");  
+            }
+      }
+    } else if(chosenOne.class == "" && chosenOne.month+1 == findKey(monthes,pageCurMonth) && chosenOne.year == curYear) {
+         for (let i=0; i<document.querySelectorAll(".prevMonth").length;i++) {
+            if(document.querySelectorAll(".prevMonth")[i].innerHTML == chosenOne.day) {
+              document.querySelectorAll(".prevMonth")[i].classList.add("cal-active");  
+            }    
+          }  
+    } else if(chosenOne.class == "" && chosenOne.month-1 == findKey(monthes,pageCurMonth) && chosenOne.year == curYear){
+         for (let i=0; i<document.querySelectorAll(".nextMonth").length;i++) {
+            if(document.querySelectorAll(".nextMonth")[i].innerHTML == chosenOne.day) {
+              document.querySelectorAll(".nextMonth")[i].classList.add("cal-active");  
+            }    
+        }        
+    } else if(chosenOne.class == "prevMonth" && chosenOne.month == findKey(monthes,pageCurMonth) && chosenOne.year == curYear){
+       for (let i=0; i<document.querySelectorAll("td:not(.prevMonth)").length;i++) {
+            if(document.querySelectorAll("td:not(.prevMonth)")[i].innerHTML == chosenOne.day) {
+              document.querySelectorAll("td:not(.prevMonth)")[i].classList.add("cal-active");  
+            }
+       }
+    } else if (chosenOne.class == "prevMonth" && chosenOne.month+1 == findKey(monthes,pageCurMonth) && chosenOne.year == curYear || chosenOne.month+1==12 && +chosenOne.year+1 == +curYear && pageCurMonth=="Jan") {
+            for(j=0;j<document.querySelectorAll(".prevMonth").length;j++) {
+              if(document.querySelectorAll(".prevMonth")[j].innerHTML == chosenOne.day)
+              document.querySelectorAll(".prevMonth")[j].classList.add("cal-active");  
+            }
+
+    } else if (chosenOne.class == "nextMonth" && chosenOne.month == findKey(monthes,pageCurMonth) && chosenOne.year == curYear) {
+            for(j=0;j<document.querySelectorAll("td:not(.nextMonth)").length;j++) {
+              if(document.querySelectorAll("td:not(.nextMonth)")[j].innerHTML == chosenOne.day)
+                document.querySelectorAll("td:not(.nextMonth)")[j].classList.add("cal-active");  
+              }
+    } else if (chosenOne.class == "nextMonth" && chosenOne.month-1 == findKey(monthes,pageCurMonth && chosenOne.year == curYear) || chosenOne.month-1==-1 && +chosenOne.year-1 == +curYear && pageCurMonth=="Jan") {
+            for(j=0;j<document.querySelectorAll(".nextMonth").length;j++) {
+              if(document.querySelectorAll(".nextMonth")[j].innerHTML == chosenOne.day)
+                document.querySelectorAll(".nextMonth")[j].classList.add("cal-active");  
+              }
+    }
+
+
+
+
+    if(calendar.classList.contains("calendar2")) {
+      for(let i =0; i<document.querySelectorAll("td").length;i++){
+          document.querySelectorAll("td")[i].classList.remove("cal-active")
+          if(chosenTwo.class == "" &&  document.querySelectorAll("td")[i].innerHTML == chosenTwo.day && pageCurMonth==chosenTwo.month && ("" + date.getFullYear())== chosenTwo.year) {
+           document.querySelectorAll("td")[i].classList.add("cal2-active");   
+        }
+      }
+      if(chosenTwo.class == "" && chosenTwo.month == findKey(monthes,pageCurMonth) && chosenTwo.year == curYear) {
+        for (let i=0; i<document.querySelectorAll(".currMonth").length;i++) {
+            if(document.querySelectorAll(".currMonth")[i].innerHTML == chosenTwo.day) {
+              document.querySelectorAll(".currMonth")[i].classList.add("cal2-active");  
+            }
+        }
+      } else if(chosenTwo.class == "" && chosenTwo.month+1 == findKey(monthes,pageCurMonth) && chosenTwo.year == curYear) {
+          for (let i=0; i<document.querySelectorAll(".prevMonth").length;i++) {
+            if(document.querySelectorAll(".prevMonth")[i].innerHTML == chosenTwo.day) {
+              document.querySelectorAll(".prevMonth")[i].classList.add("cal2-active");  
+            }    
+          }  
+      } else if(chosenTwo.class == "" && chosenTwo.month-1 == findKey(monthes,pageCurMonth) && chosenTwo.year == curYear){
+          for (let i=0; i<document.querySelectorAll(".nextMonth").length;i++) {
+            if(document.querySelectorAll(".nextMonth")[i].innerHTML == chosenTwo.day) {
+              document.querySelectorAll(".nextMonth")[i].classList.add("cal2-active");  
+            }    
+          }        
+      } else if(chosenTwo.class == "prevMonth" && chosenTwo.month == findKey(monthes,pageCurMonth) && chosenTwo.year == curYear){
+        for (let i=0; i<document.querySelectorAll("td:not(.prevMonth)").length;i++) {
+            if(document.querySelectorAll("td:not(.prevMonth)")[i].innerHTML == chosenTwo.day) {
+              document.querySelectorAll("td:not(.prevMonth)")[i].classList.add("cal2-active");  
+            }
+        }
+      } else if (chosenTwo.class == "prevMonth" && chosenTwo.month+1 == findKey(monthes,pageCurMonth) && chosenTwo.year == curYear || chosenTwo.month+1==12 && +chosenTwo.year+1 == +curYear && pageCurMonth=="Jan") {
+        for(j=0;j<document.querySelectorAll(".prevMonth").length;j++) {
+            if(document.querySelectorAll(".prevMonth")[j].innerHTML == chosenTwo.day) {
+              document.querySelectorAll(".prevMonth")[j].classList.add("cal2-active");  
+            }
+        }    
+      } else if (chosenTwo.class == "nextMonth" && chosenTwo.month == findKey(monthes,pageCurMonth) && chosenTwo.year == curYear) {
+            for(j=0;j<document.querySelectorAll("td:not(.nextMonth)").length;j++) {
+              if(document.querySelectorAll("td:not(.nextMonth)")[j].innerHTML == chosenTwo.day) {
+                 document.querySelectorAll("td:not(.nextMonth)")[j].classList.add("cal2-active");  
+              }
+            }
+      } else if (chosenTwo.class == "nextMonth" && chosenTwo.month-1 == findKey(monthes,pageCurMonth && chosenTwo.year == curYear) || chosenTwo.month-1==-1 && +chosenTwo.year-1 == +curYear && pageCurMonth=="Jan") {
+            for(j=0;j<document.querySelectorAll(".nextMonth").length;j++) {
+              if(document.querySelectorAll(".nextMonth")[j].innerHTML == chosenTwo.day){
+                 document.querySelectorAll(".nextMonth")[j].classList.add("cal2-active");  
+              }
+            }
+      }
+    }
+    document.querySelector(".event-wrap").style.display = "none";
+}
+ 
+
+
+function findKey(obj, value) {
+   return  Number(Object.keys(obj).filter(function(key) {return obj[key] === value})[0])
+}
+
+function getDay(date) { 
+    let day = date.getDay();
+    if (day == 0) day = 7;
+    return day - 1;
+}
+
+function nextMonth () {
+    if(curMonth == 11) {
+        curMonth = -1;
+        +curYear++
+        curYear = String(curYear) 
+    }
+        calendar.innerHTML = "";
+        curMonth++;
+        pageCurMonth = monthes[curMonth];
+        document.getElementById("calendar-header").innerHTML = pageCurMonth + " " + curYear.substring(2);
+        createCalendar("calendar", curYear,  curMonth);
+}
+
+function prevMonth () {
+      if(curMonth == 0) {
+        curMonth = 12;
+        +curYear--;
+        curYear = String(curYear) 
+      }
+        curMonth--;
+        pageCurMonth = monthes[curMonth];
+        document.getElementById("calendar-header").innerHTML = pageCurMonth + " " + curYear.substring(2)
+        createCalendar("calendar", curYear, curMonth)
+}
+
+function getLastDayOfMonth(year, month) {
+  var date = new Date(year, month + 1, 0);
+  return date.getDate();
+}
+
+function cancellAll() {
+  select.value = "Today";
+  from.value = to.value = "";
+  document.getElementById("header-text").innerHTML = pageCurMonth + " " + new Date().getDate() + "," +  curYear.substring(2);
+  document.querySelector(".events").innerHTML = "";
+  document.querySelector("#eventHeader").innerHTML = "";
+}
+
+function cancellEvents() {
+  document.querySelector(".event-wrap").classList.remove("active")
+}
+
+function deleteAllEvents() {
+  localStorage.clear();
+  events = {};
+  createCalendar("calendar", curYear, curMonth);
+  document.querySelector(".event-wrap").classList.remove("active")
+}
+
+function datePicker (e) {
+  for (let i =0; i<document.querySelectorAll("td").length;i++) {
+    document.querySelectorAll("td")[i].classList.remove("cal-active")
+    document.querySelectorAll("td")[i].classList.remove("cal2-active")
+  }
+  if (document.querySelector(".cal-wrapper").classList.contains("calendar2")) {
+    if(event.target.classList.contains("prevMonth")) {
+      chosenTwo.month = findKey(monthes, pageCurMonth)-1 >= 0 ? findKey(monthes, pageCurMonth)-1 : 11;
+      chosenTwo.year = chosenTwo.month==11 ? chosenTwo.year = curYear-1 + "" : curYear+"";
+      to.value = monthes[chosenTwo.month] + " " + this.innerHTML + ", " +  chosenTwo.year.substring(2);
+      chosenTwo.class = "prevMonth";
+      chosenTwo.day = this.innerHTML;
+      this.classList.add("cal2-active");
+    }else if(this.classList.contains("nextMonth")) {
+      chosenTwo.month = findKey(monthes, pageCurMonth) +1 <=11 ? findKey(monthes, pageCurMonth) +1 : 0;
+      chosenTwo.year = chosenTwo.month==0 ? chosenTwo.year = +curYear+1 + "" : curYear+"";
+      to.value = monthes[chosenTwo.month] + " " + this.innerHTML + ", " +  chosenTwo.year.substring(2);
+      chosenTwo.class = "nextMonth";
+      chosenTwo.day = this.innerHTML;
+      this.classList.add("cal2-active");
+      }
+    else {
+      chosenTwo.class = "";
+      chosenTwo.year = curYear;
+      chosenTwo.month =   findKey(monthes, pageCurMonth)
+      to.value = pageCurMonth + " " + this.innerHTML + ", " +  curYear.substring(2);
+      chosenTwo.day = this.innerHTML;
+      this.classList.add("cal2-active");
+    }
+    
+  }else{
+
+    if(event.target.classList.contains("prevMonth")) {
+      chosenOne.month = findKey(monthes, pageCurMonth)-1 >= 0 ? findKey(monthes, pageCurMonth)-1 : 11;
+      chosenOne.year = chosenOne.month==11 ? chosenOne.year = curYear-1 + "" : curYear+"";
+      from.value = monthes[chosenOne.month] + " " + this.innerHTML + ", " +  chosenOne.year.substring(2);
+      chosenOne.class = "prevMonth";
+      chosenOne.day = this.innerHTML;
+      this.classList.add("cal-active");
+    }else if(this.classList.contains("nextMonth")) {
+      chosenOne.month = Number(findKey(monthes, pageCurMonth)) +1 <=11 ? Number(findKey(monthes, pageCurMonth)) +1 : 0;
+      chosenOne.year = chosenOne.month==0 ? chosenOne.year = +curYear+1 + "" : curYear+"";
+      from.value = monthes[chosenOne.month] + " " + this.innerHTML + ", " +  chosenOne.year.substring(2);
+      chosenOne.class = "nextMonth";
+      chosenOne.day = this.innerHTML;
+      this.classList.add("cal-active");
+    }else {
+      chosenOne.class = "";
+      chosenOne.year = curYear;
+      chosenOne.month =   findKey(monthes, pageCurMonth)
+      from.value = pageCurMonth + " " + this.innerHTML + ", " +  curYear.substring(2);
+      chosenOne.day = this.innerHTML;
+      this.classList.add("cal-active");
+    }
+  }  
+  document.querySelector(".event-wrap").classList.remove("active");
+} 
+  
+
+
+document.querySelector(".wrapper").onclick = function(){
+
+  if (event.target.classList.contains("select")) {
+      document.querySelector("ul").classList.toggle("active");
+      document.querySelector(".cal-wrapper").classList.remove("active");
+      document.querySelector(".select").classList.toggle("select-active");
+  } else if (event.target.tagName == "LI") {
+      document.querySelector("ul").classList.remove("active")
+  } else if(document.querySelector("ul").classList.contains("active") && !event.target.classList.contains("select_list")){
+      document.querySelector("ul").classList.remove("active")
+  } else if(event.target.getAttribute("id")=="from") {
+    if(document.querySelector(".cal-wrapper").classList.contains("calendar2")){
+      document.querySelector(".cal-wrapper").classList.remove("calendar2");
+      createCalendar("calendar", curYear, curMonth)
+      document.querySelector(".cal-wrapper").classList.add("active")
+    } else {
+      document.querySelector(".cal-wrapper").classList.toggle("active")}
+      createCalendar("calendar", curYear, curMonth)
+      select.value = "Custom";
+  } else if(event.target.getAttribute("id")=="to"){
+      if(chosenOne.day!="") {
+        let days = document.querySelectorAll("td");
+        for (let i =0; i<days.length;i++) {
+        days[i].classList.remove("cal-active")
+        }
+      }
+      if(document.querySelector(".cal-wrapper").classList.contains("calendar2")){
+        document.querySelector(".cal-wrapper").classList.remove("active", "calendar2")
+      } else if(!document.querySelector(".cal-wrapper").classList.contains("calendar2")){
+        document.querySelector(".cal-wrapper").classList.add("active")
+        document.querySelector(".cal-wrapper").classList.add("calendar2")
+        createCalendar("calendar", curYear, curMonth)
+        select.value = "Custom";
+      } 
+  } else if(document.querySelector(".cal-wrapper").classList.contains("active") && !event.target.classList.contains("cal-wrapper")){
+        document.querySelector(".cal-wrapper").classList.remove("active")
+  }
+}
+  
+  let liis = document.querySelectorAll("li");
+  let headerText =  document.getElementById("header-text");
+
+  for (let i=0; i < liis.length; i++) {
+      liis[i].onclick = function() {
+      select.value = this.dataset.value;
+      if(this.dataset.value=='Yesterday') {
+        to.value = from.value= "";
+        let tempDate = new Date()
+        tempDate.setDate(tempDate.getDate() - 1);
+        headerText.innerHTML =  monthes[tempDate.getMonth()] + " " + tempDate.getDate() + ", " +  String(tempDate.getFullYear()).substring(2);
+      } else if (this.dataset.value=='Today') {
+        to.value = from.value= "";
+        headerText.innerHTML = monthes[new Date().getMonth()] + " " + new Date().getDate() + ", " +  curYear.substring(2)
+      } 
+      else if (this.dataset.value=="Last 7 days" || this.dataset.value=="Last 30 days" || this.dataset.value=="Last 90 days") {
+        let tempDate = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()-parseInt(this.dataset.value.replace(/\D+/g,"")));
+        headerText.innerHTML = monthes[tempDate.getMonth()] + " " + tempDate.getDate() + ", " + String(tempDate.getFullYear()).substring(2) + " - " +  pageCurMonth + " " + new Date().getDate() + ", " +  curYear.substring(2);
+        from.value = monthes[tempDate.getMonth()] + " " + tempDate.getDate() + "," + String(tempDate.getFullYear()).substring(2);
+        to.value = pageCurMonth + " " + new Date().getDate() + ", " +  curYear.substring(2);
+    } else if (this.dataset.value=="Custom") {
+       to.value = from.value= "";
+       document.querySelector(".cal-wrapper").classList.add("active");
+       createCalendar("calendar", curYear,  curMonth);
+    }
+  }
+  }
+
+let dateofEvent;
+let datesArray = [];
+
+Date.prototype.addDays = function(days) {
+    let date = new Date(this.valueOf());
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
+function getDates(fromDate, topDate) {
+    let dateArray = [];
+    let currentDate = fromDate;
+    while (currentDate <= topDate) {
+        dateArray.push(new Date (currentDate).getMonth()+" " + new Date (currentDate).getDate() + ", " + new Date (currentDate).getFullYear());
+        currentDate = currentDate.addDays(1);
+    }
+    return dateArray
+}
+
+let dayOfEvent;
+
+function eventEditor(e) {
+document.querySelector(".event-wrap").classList.add("active")
+if(event.target.classList.contains("edited")){
+  for (let event in events) {
+      if(this.innerHTML == event.split(" ")[1].replace(/\,/g, '') &&  monthes[event.split(" ")[0]] == pageCurMonth){
+       document.getElementById("event").value = events[event]
+      } else if (this.innerHTML == event.split(" ")[1].replace(/\,/g, '') &&  monthes[Number(event.split(" ")[0])+1]== pageCurMonth) {
+           for (let i=0; i<document.querySelectorAll(".prevMonth").length;i++) {
+             if((findKey(monthes, pageCurMonth)-1)+ " "+ document.querySelectorAll(".prevMonth")[i].innerHTML + ", " + curYear == event){
+             document.getElementById("event").value = events[event]
+             }
+           }
+      } else if (this.innerHTML == event.split(" ")[1].replace(/\,/g, '') &&  monthes[Number(event.split(" ")[0])-1]== pageCurMonth) {
+           for (let i=0; i<document.querySelectorAll(".nextMonth").length;i++) {
+             if((findKey(monthes, pageCurMonth)+1)+ " "+ document.querySelectorAll(".nextMonth")[i].innerHTML + ", " + curYear == event){
+             document.getElementById("event").value = events[event]
+             }
+           }
+      }
+  }
+} else {
+  document.getElementById("event").value = "";
+}
+if(!document.querySelector(".cal-wrapper").classList.contains("calendar2")) {
+  dateofEvent =  chosenOne.month + " " + chosenOne.day + ", " + chosenOne.year;
+} else {
+  dateofEvent =  chosenTwo.month + " " + chosenTwo.day + ", " + chosenTwo.year;
+}
+dayOfEvent = this;
+}
+
+
+function showEvents(){
+document.querySelector(".events").innerHTML = "";
+if(Object.keys(events).length!=0) {
+  if (select.value == "Today") {
+      for (let eventDate in events) {
+        if(findKey(monthes, pageCurMonth)+ " "+ new Date().getDate() + ", " + curYear == eventDate){
+          document.getElementById("eventHeader").innerHTML = `event for ${select.value}:`;
+          let p = document.createElement("p");
+          p.innerHTML = events[eventDate];
+          document.querySelector(".events").appendChild(p)
+        } else {
+          document.getElementById("eventHeader").innerHTML =  `there is no event for ${select.value}`;
+        }
+      } 
+  } else if (select.value == "Yesterday" && Object.keys(events).length > 0) {
+          for (let eventDate in events) {
+             let d = new Date()
+             d.setDate(d.getDate() - 1);
+            if(d.getMonth()+ " "+ d.getUTCDate() + ", " + d.getFullYear() == eventDate){
+              document.getElementById("eventHeader").innerHTML = `event for ${select.value}:`;
+              let p = document.createElement("p");
+              p.innerHTML = events[eventDate];
+              document.querySelector(".events").appendChild(p)
+            } else {
+               document.getElementById("eventHeader").innerHTML =  `there is no event for ${select.value}`;
+            }
+          } 
+  } else if (select.value == "Last 7 days" || select.value == "Last 30 days" || select.value == "Last 90 days") {
+          let dateTo = new Date();
+          let dateFrom = new Date();
+          dateFrom.setDate(dateFrom.getDate() - parseInt(select.value.replace(/\D+/g,"")));
+          let dateArray= getDates(dateFrom, dateTo);
+          let flag = false;
+          for (let eventDate in events) {
+             for(let i=0;i <dateArray.length;i++) {
+                if(eventDate == dateArray[i]){
+                  flag = true;
+                  document.getElementById("eventHeader").innerHTML = `event for ${select.value}:`;
+                  let p = document.createElement("p");
+                  p.innerHTML = monthes[eventDate.split(" ")[0]] + " " + eventDate.split(" ")[1] + eventDate.slice(-2) +  " - " + events[eventDate];
+                  document.querySelector(".events").appendChild(p);
+                } if(!flag){
+                  document.getElementById("eventHeader").innerHTML =  `there are no events for ${select.value}`;
+                }
+             }    
+          }
+  } else if (select.value == "Custom") {
+          if(from.value=="" || to.value =="" || new Date(chosenOne.year + ","+ chosenOne.month + "," + chosenOne.day) > new Date(chosenTwo.year + ","+ chosenTwo.month + "," + chosenTwo.day)){
+             document.getElementById("eventHeader").innerHTML = "invalid date range"; 
+          } else {
+            let dateFrom = new Date();
+            dateFrom.setFullYear(chosenOne.year)
+            dateFrom.setMonth(chosenOne.month)
+            dateFrom.setDate(chosenOne.day)
+            let dateTo = new Date ();
+            dateTo.setFullYear(chosenTwo.year)
+            dateTo.setMonth(chosenTwo.month)
+            dateTo.setDate(chosenTwo.day)
+            let dateArray = getDates(dateFrom, dateTo)
+            let flag = false;
+            headerText.innerHTML = `${monthes[chosenOne.month]}  ${chosenOne.day}  ${chosenOne.year.substring(2)} - ${monthes[chosenTwo.month]} ${chosenTwo.day},  ${chosenTwo.year.substring(2)}`;
+            for (let eventDate in events) {
+              for(let i=0;i <dateArray.length;i++) {
+                if(eventDate == dateArray[i]){
+                  document.getElementById("eventHeader").innerHTML = `events for ${monthes[chosenOne.month]}  ${chosenOne.day},  ${chosenOne.year.substring(2)} - ${monthes[chosenTwo.month]} ${chosenTwo.day},  ${chosenTwo.year.substring(2)}:`;
+                  let p = document.createElement("p");
+                  p.innerHTML = monthes[eventDate.split(" ")[0]] + " " + eventDate.split(" ")[1] + eventDate.slice(-2) +  " - " + events[eventDate];
+                  document.querySelector(".events").appendChild(p)
+                  flag = true
+                }
+              }
+            }    
+            if(!flag){
+               document.getElementById("eventHeader").innerHTML =  "there are no events for this range";    
+            }
+          }
+  }
+} else {
+  document.getElementById("eventHeader").innerHTML =  "there are no events for all time";
+}
+}
+
+let seriaEvents 
+function eventSaver() {
+  dayOfEvent.classList.add("edited")
+if(document.getElementById("event").value != "") {
+  events[dateofEvent] = document.getElementById("event").value;
+  seriaEvents = JSON.stringify(events);
+  localStorage.setItem("myEvents", seriaEvents);
+  document.getElementById("event").value = "";
+  document.querySelector(".event-wrap").classList.remove("active");
+} else {
+  dayOfEvent.classList.remove("edited")
+  document.querySelector(".event-wrap").classList.remove("active")
+  for (let event in events) {
+    if(dayOfEvent.innerHTML == event.split(" ")[1].replace(/\,/g, '') &&  monthes[event.split(" ")[0]] == pageCurMonth){
+      delete events[event];
+      seriaEvents = JSON.stringify(events);
+      localStorage.setItem("myEvents", seriaEvents);
+    } 
+    else if(dayOfEvent.innerHTML == event.split(" ")[1].replace(/\,/g, '') &&  monthes[Number(event.split(" ")[0])-1] == pageCurMonth){
+      delete events[(findKey(monthes, pageCurMonth)+1)+ " "+ dayOfEvent.innerHTML + ", " + curYear];
+      seriaEvents = JSON.stringify(events);
+      localStorage.setItem("myEvents", seriaEvents);
+    } else if(dayOfEvent.innerHTML == event.split(" ")[1].replace(/\,/g, '') &&  monthes[Number(event.split(" ")[0])+1] == pageCurMonth){
+      delete events[(findKey(monthes, pageCurMonth)-1)+ " "+ dayOfEvent.innerHTML + ", " + curYear];
+      seriaEvents = JSON.stringify(events);
+      localStorage.setItem("myEvents", seriaEvents);
+    }
+
+  }
+}
+}
+
+
+</script>
+
+</body>
+
+</html>

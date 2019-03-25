@@ -1,0 +1,253 @@
+
+h3, p, button, li, span, input{
+		font-family: 'Source Sans Pro', sans-serif;
+}
+h3 {
+    text-align: center;
+    color: #2d3363;
+    margin: 0;
+    font-size: 15px;
+}
+
+.cal-wrapper {
+    border: 1px #2d3363 solid;
+    position: absolute;
+    display: none;
+    left: 19px;
+    top: 146px;
+    width: 268px;
+    text-align: center;
+    z-index: 1;
+    background-color: white;
+    color: #2d3363;
+    padding: 5px;
+    border-radius: 3px;
+}
+
+.calendar2 {
+    left: 160px;
+}
+
+.active {
+    display: block !important;
+}
+
+.cal-wrapper p, .cal-wrapper td{
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.wrapper {
+    border: 1px #2d3363 solid;
+    width: 300px;
+    border-radius: 5px;
+    padding: 0;
+}
+.cal-header {
+    vertical-align: middle;
+    border-bottom: 1px #2d3363 solid;
+    height: 25px;
+    line-height: 30px;
+    background-image: url(https://img.icons8.com/windows/20/000000/calendar.png);
+    background-repeat: no-repeat;
+    background-position:  right center ;
+    padding:  5px;
+}
+span {
+    vertical-align: middle;
+}
+.form-wrapper {
+    padding: 10px;
+    position: relative;
+}
+
+.select { 
+    background-image: url('download.png');
+    background-repeat: no-repeat;
+    background-position: 98%;
+    border: 2px solid #cecece;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    width: 270px;
+    height: 25px;
+    padding-left: 7px;
+}
+.select-active {
+    background-image: url('upload2.png');
+}
+.check {
+    position: absolute;
+    left:92%;
+    display: none;
+}
+
+li:hover .check {
+    display: inline
+}
+
+ul {
+    padding-left: 7px;
+    margin: 0;
+    list-style-type: none;
+    border: 2px #2d3363 solid;
+    position: absolute;
+    top: 26%;
+    left: 10px;
+    width: 270px;
+    background-color: white;
+    color: #2d3363;
+    display: none;
+}
+
+li {
+    vertical-align: middle;
+    margin: 5px 0;
+    padding-left: 7px;
+}
+
+li:hover {
+    cursor: pointer;
+    background-color:  #47587d;
+    color: white;
+}
+
+.inp-wrapper {
+    display: flex;
+    justify-content: space-between;
+}
+p {
+    margin: 0;
+    color: #2d3363;
+}
+label p {
+    font-size: 14px;
+    margin: 5px 0;
+}
+
+.inp-wrapper input {
+    width: 130px;
+    height: 20px;
+    background-image: url(https://img.icons8.com/windows/20/000000/calendar.png);
+    background-repeat: no-repeat;
+    background-position: right;
+    border: 1px solid #cecece;
+    cursor: pointer;
+    margin-bottom: 10px;
+    outline: none;
+    border-radius: 3px;
+    padding-left: 7px;
+}
+input {
+    outline: none;
+}
+input:focus {
+    border-color: #2d3363;
+  }
+
+.cancell {
+    margin-left:116px;
+    color: #7d7d7d;  
+    background-color: white;
+    border: 2px solid #cecece;
+}
+button {
+    width: 80px;
+    height: 30px;
+    background-color: red;
+    color: white;
+    border-color: red;
+    border-radius:5px;  
+    cursor: pointer;
+}
+
+table {
+    color: #2d3363;
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  td,
+  th {
+    padding: 9px 0px;
+    text-align: center;
+    position: relative;
+    border-radius: 20px;
+  }
+  td {
+      cursor: pointer;
+  }
+
+  th {
+    font-weight: bold;
+    background-color: #E6E6E6;
+  }
+
+#calendar {
+    margin-top: 10px;
+}
+ .today {
+      border: 1px solid #2d3363;
+  }
+
+  .cal-active {
+    background-color:  #47587d;
+    color: white;
+  }
+
+  .cal2-active {
+    background-color:  #47587d;
+    color: white;
+  }
+
+
+  .cal {
+    border: 1px solid black;
+    border-radius: 50%;
+  }
+  #calendar-header {
+    display: inline;
+  }
+ td.prevMonth,  td.nextMonth {
+      color: #7d7d7d
+  }
+  .arrows {
+    font-weight: bolder;
+    font-size: 22px;
+    position: absolute;
+    left:81%;
+    cursor: pointer;
+  }
+.arrows:first-child{
+      left:10%
+  }
+
+.event-wrap {
+    padding: 10px;
+    display: none;
+
+}
+.event-wrap .cancell {
+    margin-left: 0;
+}
+#event {
+    width: 240px;
+    height: 20px;
+    margin:15px auto;
+}
+.edited {
+    color: red !important;
+}
+#events {
+    width: 300px;
+    text-align: center;
+}
+#events p {
+    margin-top: 10px;
+}
+.event-wrap button {
+    padding: 0;
+    font-size: 12px;
+    width: 80px;
+    height: 30px;
+}
